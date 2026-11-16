@@ -1,8 +1,152 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿
+@{
+    ViewData["Title"] = "Главная";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="hero">
+    <div class="container hero-content">
+        <div class="hero-label">АГЕНТСТВО НЕДВИЖИМОСТИ</div>
+
+        <h1>Найдите место,<br />которое станет <span>домом</span></h1>
+
+        <p class="hero-description">
+            Подберём недвижимость под ваши цели, бюджет и образ жизни.
+            Сопроводим на каждом этапе сделки.
+        </p>
+
+        <form class="search-panel" asp-controller="Home" asp-action="Index" method="get">
+            <div class="search-field">
+                <label for="dealType">Тип сделки</label>
+                <select id="dealType" name="dealType">
+                    <option value="">Любая сделка</option>
+                    <option value="Продажа">Купить</option>
+                    <option value="Аренда">Арендовать</option>
+                </select>
+            </div>
+
+            <div class="search-field">
+                <label for="propertyType">Тип недвижимости</label>
+                <select id="propertyType" name="propertyType">
+                    <option value="">Любой тип</option>
+                    <option value="Квартира">Квартира</option>
+                    <option value="Дом">Дом</option>
+                    <option value="Коммерческая">Коммерческая</option>
+                </select>
+            </div>
+
+            <div class="search-field">
+                <label for="district">Район</label>
+                <input id="district" name="district" type="text"
+                       placeholder="Например, центр" />
+            </div>
+
+            <button class="search-button" type="submit">Найти объект</button>
+        </form>
+
+        <div class="hero-note">
+            <span class="hero-note-dot"></span>
+            Помогаем с покупкой, продажей и арендой
+        </div>
+    </div>
+</section>
+
+<section class="catalog-section" id="catalog">
+    <div class="container">
+        <div class="section-heading">
+            <div>
+                <div class="section-label">НАШИ ПРЕДЛОЖЕНИЯ</div>
+                <h2>Популярные объекты</h2>
+                <p>Подборка недвижимости, на которую стоит обратить внимание.</p>
+            </div>
+
+            <a class="text-link" href="#catalog">Смотреть все объекты →</a>
+        </div>
+
+        <div class="property-grid">
+            <article class="property-card">
+                <div class="property-image">
+                    <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=900&q=85"
+                         alt="Современный загородный дом" />
+                    <span class="property-tag">Продажа</span>
+                </div>
+                <div class="property-info">
+                    <div class="property-price">12 500 000 ₽</div>
+                    <h3>Современный загородный дом</h3>
+                    <p class="property-address">Центральный район</p>
+                    <div class="property-features">
+                        <span>180 м²</span>
+                        <span>4 комнаты</span>
+                        <span>2 этажа</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="property-card">
+                <div class="property-image">
+                    <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=85"
+                         alt="Светлая современная квартира" />
+                    <span class="property-tag">Продажа</span>
+                </div>
+                <div class="property-info">
+                    <div class="property-price">8 200 000 ₽</div>
+                    <h3>Светлая квартира с дизайнерским ремонтом</h3>
+                    <p class="property-address">Ленинский район</p>
+                    <div class="property-features">
+                        <span>76 м²</span>
+                        <span>3 комнаты</span>
+                        <span>7 этаж</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="property-card">
+                <div class="property-image">
+                    <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=85"
+                         alt="Современная квартира с панорамными окнами" />
+                    <span class="property-tag property-tag-rent">Аренда</span>
+                </div>
+                <div class="property-info">
+                    <div class="property-price">65 000 ₽ / мес.</div>
+                    <h3>Квартира с панорамными окнами</h3>
+                    <p class="property-address">Октябрьский район</p>
+                    <div class="property-features">
+                        <span>54 м²</span>
+                        <span>2 комнаты</span>
+                        <span>12 этаж</span>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="about-section" id="about">
+    <div class="container about-inner">
+        <div>
+            <div class="section-label">ПОЧЕМУ МЫ</div>
+            <h2>Недвижимость —<br />это больше, чем стены</h2>
+        </div>
+
+        <div class="about-text">
+            <p>
+                Мы помогаем клиентам принимать взвешенные решения:
+                подбираем подходящие объекты, организуем просмотры,
+                проверяем документы и сопровождаем оформление сделки.
+            </p>
+            <div class="advantages">
+                <div>
+                    <strong>01</strong>
+                    <span>Индивидуальный подбор</span>
+                </div>
+                <div>
+                    <strong>02</strong>
+                    <span>Проверка документов</span>
+                </div>
+                <div>
+                    <strong>03</strong>
+                    <span>Сопровождение сделки</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
