@@ -1,8 +1,6 @@
-
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using RealEstateAgency.Data;
 using RealEstateAgency.Models;
@@ -35,7 +33,7 @@ public class PropertiesController : Controller
         _environment = environment;
     }
 
-    // Каталог недвижимости доступен всем посетителям.
+    // Публичный каталог. Неопубликованные объекты не показываются.
     [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> Index(PropertyFilterViewModel filter)
@@ -43,6 +41,9 @@ public class PropertiesController : Controller
         var query = _dbContext.Properties
             .AsNoTracking()
             .Include(property => property.Photos)
+            .Where(property =>
+                property.Status != PropertyStatus.PendingModeration &&
+                property.Status != PropertyStatus.Rejected)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.District))
@@ -130,6 +131,30 @@ public class PropertiesController : Controller
             return NotFound();
         }
 
+        // Объекты на модерации и отклонённые объекты
+        // не должны быть доступны посторонним пользователям.
+        if (property.Status == PropertyStatus.PendingModeration ||
+            property.Status == PropertyStatus.Rejected)
+        {
+            bool canView = User.IsInRole(UserRoles.Admin);
+
+            if (!canView && User.IsInRole(UserRoles.Realtor))
+            {
+                string? userId =
+                    User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                canView = await _dbContext.RealtorProfiles
+                    .AnyAsync(r =>
+                        r.Id == property.RealtorProfileId &&
+                        r.UserId == userId);
+            }
+
+            if (!canView)
+            {
+                return NotFound();
+            }
+        }
+
         var model = new PropertyDetailsViewModel
         {
             Id = property.Id,
@@ -163,7 +188,7 @@ public class PropertiesController : Controller
         return View(new PropertyCreateViewModel());
     }
 
-    // Сохранение нового объекта.
+    // Сохранение нового объекта с отправкой на модерацию.
     [Authorize(Roles = UserRoles.Realtor)]
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -196,7 +221,9 @@ public class PropertiesController : Controller
             Floor = model.Floor,
             Price = model.Price,
             Description = model.Description?.Trim(),
-            Status = PropertyStatus.Available,
+
+            Status = PropertyStatus.PendingModeration,
+
             CreatedAt = DateTime.UtcNow,
             RealtorProfileId = realtor.Id
         };
@@ -223,7 +250,9 @@ public class PropertiesController : Controller
 
                 string fileName = $"{Guid.NewGuid()}{extension}";
 
-                string filePath = Path.Combine(uploadDirectory, fileName);
+                string filePath = Path.Combine(
+                    uploadDirectory,
+                    fileName);
 
                 await using (var stream = new FileStream(
                     filePath,
@@ -244,7 +273,8 @@ public class PropertiesController : Controller
             await _dbContext.SaveChangesAsync();
         }
 
-        TempData["SuccessMessage"] = "Объект недвижимости успешно добавлен.";
+        TempData["SuccessMessage"] =
+            "Объект отправлен на модерацию. После одобрения администратора он появится в каталоге.";
 
         return RedirectToAction(nameof(Details), new { id = property.Id });
     }

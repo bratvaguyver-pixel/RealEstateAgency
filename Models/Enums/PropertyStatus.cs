@@ -1,4 +1,3 @@
-
 using System.ComponentModel.DataAnnotations;
 
 namespace RealEstateAgency.Models.Enums;
@@ -15,5 +14,11 @@ public enum PropertyStatus
     Sold = 3,
 
     [Display(Name = "Сдан в аренду")]
-    Rented = 4
+    Rented = 4,
+
+    [Display(Name = "На модерации")]
+    PendingModeration = 5,
+
+    [Display(Name = "Отклонён")]
+    Rejected = 6
 }

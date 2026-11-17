@@ -1,0 +1,121 @@
+@model RealEstateAgency.ViewModels.AdminUserListViewModel
+
+@{
+    ViewData["Title"] = "Пользователи";
+}
+
+<div class="container py-5">
+    <h2 class="mb-2">Управление пользователями</h2>
+
+    <p class="text-muted mb-4">
+        Просмотр зарегистрированных пользователей и управление доступом к системе.
+    </p>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (Model.Users.Count == 0)
+    {
+        <div class="alert alert-info">
+            Пользователи отсутствуют.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ФИО</th>
+                        <th>Электронная почта</th>
+                        <th>Роль</th>
+                        <th>Дата регистрации</th>
+                        <th>Состояние</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>@user.FullName</td>
+                            <td>@user.Email</td>
+                            <td>@user.Roles</td>
+
+                            <td>
+                                @user.RegistrationDate.ToLocalTime().ToString("dd.MM.yyyy")
+                            </td>
+
+                            <td>
+                                @if (user.IsActive)
+                                {
+                                    <span class="badge bg-success">
+                                        Активен
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        Заблокирован
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (user.CanChangeStatus)
+                                {
+                                    <form asp-action="ToggleUserStatus"
+                                          method="post">
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@user.Id" />
+
+                                        @if (user.IsActive)
+                                        {
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                Заблокировать
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-success">
+                                                Разблокировать
+                                            </button>
+                                        }
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">
+                                        Недоступно
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <a asp-controller="Dashboard"
+       asp-action="Admin"
+       class="btn btn-outline-secondary mt-3">
+        Назад в панель администратора
+    </a>
+</div>

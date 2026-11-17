@@ -1,0 +1,64 @@
+@model RealEstateAgency.ViewModels.AdminRequestListViewModel
+
+@{
+    ViewData["Title"] = "Все заявки";
+}
+
+<div class="container py-5">
+    <h2 class="mb-2">Заявки клиентов</h2>
+
+    <p class="text-muted mb-4">
+        Все заявки, созданные пользователями системы.
+    </p>
+
+    @if (Model.Requests.Count == 0)
+    {
+        <div class="alert alert-info">
+            Заявки отсутствуют.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Номер</th>
+                        <th>Клиент</th>
+                        <th>Риелтор</th>
+                        <th>Тип сделки</th>
+                        <th>Тип недвижимости</th>
+                        <th>Район</th>
+                        <th>Статус</th>
+                        <th>Дата создания</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var request in Model.Requests)
+                    {
+                        <tr>
+                            <td>№@request.Id</td>
+                            <td>@request.ClientName</td>
+                            <td>@request.RealtorName</td>
+                            <td>@request.DealType</td>
+                            <td>@request.PropertyType</td>
+                            <td>@request.PreferredDistrict</td>
+                            <td>@request.Status</td>
+
+                            <td>
+                                @request.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <a asp-controller="Dashboard"
+       asp-action="Admin"
+       class="btn btn-outline-secondary mt-3">
+        Назад в панель администратора
+    </a>
+</div>

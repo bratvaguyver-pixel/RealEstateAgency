@@ -1,0 +1,85 @@
+@model RealEstateAgency.ViewModels.ContractListViewModel
+
+@using RealEstateAgency.Models.Enums
+
+@{
+    ViewData["Title"] = "Все договоры";
+}
+
+<div class="container py-5">
+    <h2 class="mb-2">Договоры агентства</h2>
+
+    <p class="text-muted mb-4">
+        Общий список договоров, оформленных риелторами.
+    </p>
+
+    @if (Model.Contracts.Count == 0)
+    {
+        <div class="alert alert-info">
+            Договоры отсутствуют.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Номер</th>
+                        <th>Клиент</th>
+                        <th>Риелтор</th>
+                        <th>Объект</th>
+                        <th>Стоимость</th>
+                        <th>Комиссия</th>
+                        <th>Тип сделки</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var contract in Model.Contracts)
+                    {
+                        <tr>
+                            <td>@contract.ContractNumber</td>
+                            <td>@contract.ClientName</td>
+                            <td>@contract.RealtorName</td>
+                            <td>@contract.PropertyAddress</td>
+
+                            <td>
+                                @contract.PropertyPrice.ToString("N0") ₽
+                            </td>
+
+                            <td>
+                                @contract.CommissionAmount.ToString("N2") ₽
+                            </td>
+
+                            <td>
+                                @contract.DealType.GetDisplayName()
+                            </td>
+
+                            <td>
+                                @contract.Status.GetDisplayName()
+                            </td>
+
+                            <td>
+                                <a asp-controller="Contracts"
+                                   asp-action="Details"
+                                   asp-route-id="@contract.Id"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Открыть
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <a asp-controller="Dashboard"
+       asp-action="Admin"
+       class="btn btn-outline-secondary mt-3">
+        Назад в панель администратора
+    </a>
+</div>

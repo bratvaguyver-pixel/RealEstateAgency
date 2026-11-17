@@ -1,0 +1,151 @@
+@model RealEstateAgency.ViewModels.AdminPropertyListViewModel
+
+@using RealEstateAgency.Models.Enums
+
+@{
+    ViewData["Title"] = "Все объекты недвижимости";
+}
+
+<div class="container py-5">
+    <h2 class="mb-2">Модерация недвижимости</h2>
+
+    <p class="text-muted mb-4">
+        Проверяйте добавленные риелторами объекты и разрешайте их публикацию.
+    </p>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning">
+            @TempData["Error"]
+        </div>
+    }
+
+    @{
+        var pendingCount = Model.Properties.Count(
+            p => p.StatusValue == PropertyStatus.PendingModeration);
+    }
+
+    <div class="alert alert-info">
+        Ожидают модерации: <strong>@pendingCount</strong>
+    </div>
+
+    @if (Model.Properties.Count == 0)
+    {
+        <div class="alert alert-info">
+            Объекты недвижимости отсутствуют.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Адрес</th>
+                        <th>Район</th>
+                        <th>Тип</th>
+                        <th>Площадь</th>
+                        <th>Стоимость</th>
+                        <th>Риелтор</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var property in Model.Properties)
+                    {
+                        <tr>
+                            <td>@property.Address</td>
+                            <td>@property.District</td>
+                            <td>@property.PropertyType</td>
+                            <td>@property.Area.ToString("N2") м²</td>
+                            <td>@property.Price.ToString("N0") ₽</td>
+                            <td>@property.RealtorName</td>
+
+                            <td>
+                                @if (property.StatusValue == PropertyStatus.PendingModeration)
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        На модерации
+                                    </span>
+                                }
+                                else if (property.StatusValue == PropertyStatus.Available)
+                                {
+                                    <span class="badge bg-success">
+                                        Опубликован
+                                    </span>
+                                }
+                                else if (property.StatusValue == PropertyStatus.Rejected)
+                                {
+                                    <span class="badge bg-danger">
+                                        Отклонён
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        @property.Status
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a asp-controller="Properties"
+                                       asp-action="Details"
+                                       asp-route-id="@property.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Открыть
+                                    </a>
+
+                                    @if (property.StatusValue == PropertyStatus.PendingModeration)
+                                    {
+                                        <form asp-action="ApproveProperty"
+                                              method="post">
+
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@property.Id" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-success">
+                                                Опубликовать
+                                            </button>
+                                        </form>
+
+                                        <form asp-action="RejectProperty"
+                                              method="post">
+
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@property.Id" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                Отклонить
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <a asp-controller="Dashboard"
+       asp-action="Admin"
+       class="btn btn-outline-secondary mt-3">
+        Назад в панель администратора
+    </a>
+</div>

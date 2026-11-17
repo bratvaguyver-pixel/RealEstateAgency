@@ -1,4 +1,3 @@
-
 @model RealEstateAgency.ViewModels.DashboardViewModel
 
 @{
@@ -33,10 +32,82 @@
         }
     </div>
 
+    <h4 class="mt-5 mb-3">Управление системой</h4>
+
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5>Пользователи</h5>
+                    <p class="text-muted">
+                        Просмотр аккаунтов, блокировка и разблокировка.
+                    </p>
+
+                    <a asp-controller="Admin"
+                       asp-action="Users"
+                       class="btn btn-primary">
+                        Открыть
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5>Недвижимость</h5>
+                    <p class="text-muted">
+                        Просмотр всех объектов агентства.
+                    </p>
+
+                    <a asp-controller="Admin"
+                       asp-action="Properties"
+                       class="btn btn-primary">
+                        Открыть
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5>Заявки</h5>
+                    <p class="text-muted">
+                        Просмотр заявок клиентов и их статусов.
+                    </p>
+
+                    <a asp-controller="Admin"
+                       asp-action="Requests"
+                       class="btn btn-primary">
+                        Открыть
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5>Договоры</h5>
+                    <p class="text-muted">
+                        Просмотр всех договоров агентства.
+                    </p>
+
+                    <a asp-controller="Admin"
+                       asp-action="Contracts"
+                       class="btn btn-primary">
+                        Открыть
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="mt-4">
         <a asp-controller="Home"
            asp-action="Index"
-           class="btn btn-outline-primary">
+           class="btn btn-outline-secondary">
             Вернуться на главную
         </a>
     </div>

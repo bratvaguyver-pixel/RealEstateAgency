@@ -31,7 +31,8 @@ public class Property
     [Range(typeof(decimal), "0.01", "999999999999")]
     public decimal Price { get; set; }
 
-    public PropertyStatus Status { get; set; } = PropertyStatus.Available;
+    public PropertyStatus Status { get; set; } =
+        PropertyStatus.PendingModeration;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
