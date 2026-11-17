@@ -232,6 +232,364 @@ namespace RealEstateAgency.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("RealEstateAgency.Models.Contract", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClientProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("CommissionAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("CommissionPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContractNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DealType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PropertyPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("RealtorProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("TerminatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientProfileId");
+
+                    b.HasIndex("ContractNumber")
+                        .IsUnique();
+
+                    b.HasIndex("PropertyId")
+                        .IsUnique();
+
+                    b.HasIndex("RealtorProfileId");
+
+                    b.ToTable("Contracts");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Profiles.AdminProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("HasFullAccess")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("AdminProfiles");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Profiles.ClientProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("Budget")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("PassportNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PassportSeries")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PreferredDealType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PreferredDistrict")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("ClientProfiles");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Profiles.RealtorProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CommissionPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<int>("CompletedDealsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("WorkExperience")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("RealtorProfiles");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Property", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<decimal>("Area")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
+
+                    b.Property<string>("District")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int?>("Floor")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("RealtorProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RoomCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Price");
+
+                    b.HasIndex("RealtorProfileId");
+
+                    b.HasIndex("District", "Type", "Status");
+
+                    b.ToTable("Properties");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.PropertyPhoto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("PropertyPhotos");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Request", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClientProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DealType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
+
+                    b.Property<decimal?>("MaxArea")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("MaxPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal?>("MinArea")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal?>("MinPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("PreferredDistrict")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int?>("PropertyType")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RealtorProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RoomCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientProfileId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("RealtorProfileId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Requests");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Selection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClientComment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsViewed")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RequestId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("RequestId", "PropertyId")
+                        .IsUnique();
+
+                    b.ToTable("Selections");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -281,6 +639,153 @@ namespace RealEstateAgency.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Contract", b =>
+                {
+                    b.HasOne("RealEstateAgency.Models.Profiles.ClientProfile", "Client")
+                        .WithMany("Contracts")
+                        .HasForeignKey("ClientProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RealEstateAgency.Models.Property", "Property")
+                        .WithOne("Contract")
+                        .HasForeignKey("RealEstateAgency.Models.Contract", "PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RealEstateAgency.Models.Profiles.RealtorProfile", "Realtor")
+                        .WithMany()
+                        .HasForeignKey("RealtorProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Client");
+
+                    b.Navigation("Property");
+
+                    b.Navigation("Realtor");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Profiles.AdminProfile", b =>
+                {
+                    b.HasOne("RealEstateAgency.Models.ApplicationUser", "User")
+                        .WithOne()
+                        .HasForeignKey("RealEstateAgency.Models.Profiles.AdminProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Profiles.ClientProfile", b =>
+                {
+                    b.HasOne("RealEstateAgency.Models.ApplicationUser", "User")
+                        .WithOne()
+                        .HasForeignKey("RealEstateAgency.Models.Profiles.ClientProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Profiles.RealtorProfile", b =>
+                {
+                    b.HasOne("RealEstateAgency.Models.ApplicationUser", "User")
+                        .WithOne()
+                        .HasForeignKey("RealEstateAgency.Models.Profiles.RealtorProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Property", b =>
+                {
+                    b.HasOne("RealEstateAgency.Models.Profiles.RealtorProfile", "Realtor")
+                        .WithMany("Properties")
+                        .HasForeignKey("RealtorProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Realtor");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.PropertyPhoto", b =>
+                {
+                    b.HasOne("RealEstateAgency.Models.Property", "Property")
+                        .WithMany("Photos")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Property");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Request", b =>
+                {
+                    b.HasOne("RealEstateAgency.Models.Profiles.ClientProfile", "Client")
+                        .WithMany("Requests")
+                        .HasForeignKey("ClientProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RealEstateAgency.Models.Profiles.RealtorProfile", "Realtor")
+                        .WithMany("Requests")
+                        .HasForeignKey("RealtorProfileId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Client");
+
+                    b.Navigation("Realtor");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Selection", b =>
+                {
+                    b.HasOne("RealEstateAgency.Models.Property", "Property")
+                        .WithMany("Selections")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RealEstateAgency.Models.Request", "Request")
+                        .WithMany("Selections")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Property");
+
+                    b.Navigation("Request");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Profiles.ClientProfile", b =>
+                {
+                    b.Navigation("Contracts");
+
+                    b.Navigation("Requests");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Profiles.RealtorProfile", b =>
+                {
+                    b.Navigation("Properties");
+
+                    b.Navigation("Requests");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Property", b =>
+                {
+                    b.Navigation("Contract");
+
+                    b.Navigation("Photos");
+
+                    b.Navigation("Selections");
+                });
+
+            modelBuilder.Entity("RealEstateAgency.Models.Request", b =>
+                {
+                    b.Navigation("Selections");
                 });
 #pragma warning restore 612, 618
         }
