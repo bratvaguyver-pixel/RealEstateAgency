@@ -26,7 +26,6 @@ public class AccountController : Controller
         _dbContext = dbContext;
     }
 
-    // Страница регистрации.
     [HttpGet]
     [AllowAnonymous]
     public IActionResult Register()
@@ -39,7 +38,6 @@ public class AccountController : Controller
         return View(new RegisterViewModel());
     }
 
-    // Обработка регистрации.
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
@@ -93,24 +91,19 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // Создание профиля в зависимости от выбранной роли.
         if (model.Role == UserRoles.Client)
         {
-            var clientProfile = new ClientProfile
+            _dbContext.ClientProfiles.Add(new ClientProfile
             {
                 UserId = user.Id
-            };
-
-            _dbContext.ClientProfiles.Add(clientProfile);
+            });
         }
         else if (model.Role == UserRoles.Realtor)
         {
-            var realtorProfile = new RealtorProfile
+            _dbContext.RealtorProfiles.Add(new RealtorProfile
             {
                 UserId = user.Id
-            };
-
-            _dbContext.RealtorProfiles.Add(realtorProfile);
+            });
         }
 
         await _dbContext.SaveChangesAsync();
@@ -118,10 +111,9 @@ public class AccountController : Controller
 
         await _signInManager.SignInAsync(user, isPersistent: false);
 
-        return RedirectToAction("Index", "Home");
+        return await RedirectToDashboardAsync(user);
     }
 
-    // Страница входа.
     [HttpGet]
     [AllowAnonymous]
     public IActionResult Login(string? returnUrl = null)
@@ -137,7 +129,6 @@ public class AccountController : Controller
         });
     }
 
-    // Обработка входа.
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
@@ -148,7 +139,8 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
+        var user = await _userManager.FindByEmailAsync(
+            model.Email.Trim());
 
         if (user == null || !user.IsActive)
         {
@@ -173,7 +165,7 @@ public class AccountController : Controller
                 return LocalRedirect(model.ReturnUrl);
             }
 
-            return RedirectToAction("Index", "Home");
+            return await RedirectToDashboardAsync(user);
         }
 
         if (result.IsLockedOut)
@@ -192,7 +184,6 @@ public class AccountController : Controller
         return View(model);
     }
 
-    // Выход из аккаунта.
     [HttpPost]
     [Authorize]
     [ValidateAntiForgeryToken]
@@ -203,12 +194,32 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
-    // Страница отказа в доступе.
     [HttpGet]
     [AllowAnonymous]
     public IActionResult AccessDenied()
     {
         return View();
+    }
+
+    private async Task<IActionResult> RedirectToDashboardAsync(
+        ApplicationUser user)
+    {
+        if (await _userManager.IsInRoleAsync(user, UserRoles.Admin))
+        {
+            return RedirectToAction("Admin", "Dashboard");
+        }
+
+        if (await _userManager.IsInRoleAsync(user, UserRoles.Realtor))
+        {
+            return RedirectToAction("Realtor", "Dashboard");
+        }
+
+        if (await _userManager.IsInRoleAsync(user, UserRoles.Client))
+        {
+            return RedirectToAction("Client", "Dashboard");
+        }
+
+        return RedirectToAction("Index", "Home");
     }
 
     private void AddIdentityErrors(IdentityResult result)

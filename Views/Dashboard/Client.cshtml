@@ -1,0 +1,43 @@
+
+@model RealEstateAgency.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container py-5">
+    <h1 class="mb-2">@Model.Title</h1>
+
+    <p class="text-muted mb-4">
+        @Model.Description
+    </p>
+
+    <div class="row g-4">
+        @foreach (var metric in Model.Metrics)
+        {
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@metric.Label</h5>
+
+                        <p class="display-4 fw-bold mb-2">
+                            @metric.Value
+                        </p>
+
+                        <p class="text-muted mb-0">
+                            @metric.Description
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="mt-4">
+        <a asp-controller="Home"
+           asp-action="Index"
+           class="btn btn-outline-primary">
+            Вернуться на главную
+        </a>
+    </div>
+</div>
