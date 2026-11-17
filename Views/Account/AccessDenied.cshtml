@@ -1,0 +1,18 @@
+
+@{
+    ViewData["Title"] = "Доступ запрещён";
+}
+
+<div class="container py-5 text-center">
+    <h1 class="display-4">Доступ запрещён</h1>
+
+    <p class="lead mt-3">
+        У вас недостаточно прав для просмотра этой страницы.
+    </p>
+
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="btn btn-primary mt-3">
+        Вернуться на главную
+    </a>
+</div>
