@@ -1,0 +1,293 @@
+@model RealEstateAgency.Models.Contract
+
+@using RealEstateAgency.Models.Enums
+
+@{
+    ViewData["Title"] = "Договор " + Model.ContractNumber;
+}
+
+<style>
+    @@media print {
+        header,
+        footer,
+        .no-print {
+            display: none !important;
+        }
+
+        body {
+            background: white !important;
+        }
+
+        .container {
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+
+<div class="container py-5">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success no-print">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning no-print">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 no-print">
+        <div>
+            <h2>Договор №@Model.ContractNumber</h2>
+            <p class="text-muted mb-0">
+                Информация о договоре и ходе сделки.
+            </p>
+        </div>
+
+        <button type="button"
+                class="btn btn-outline-primary"
+                onclick="window.print()">
+            Распечатать договор
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <h3>ДОГОВОР</h3>
+                <h5>на оказание услуг в сфере недвижимости</h5>
+
+                <p class="text-muted">
+                    № @Model.ContractNumber
+                </p>
+
+                <p>
+                    Дата создания:
+                    @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                </p>
+            </div>
+
+            <hr />
+
+            <h5 class="mb-3">1. Участники договора</h5>
+
+            <p>
+                <strong>Клиент:</strong>
+                @Model.Client.User.LastName
+                @Model.Client.User.FirstName
+            </p>
+
+            <p>
+                <strong>Риелтор:</strong>
+                @Model.Realtor.User.LastName
+                @Model.Realtor.User.FirstName
+            </p>
+
+            <hr />
+
+            <h5 class="mb-3">2. Объект недвижимости</h5>
+
+            <p>
+                <strong>Адрес:</strong>
+                @Model.Property.Address
+            </p>
+
+            <p>
+                <strong>Район:</strong>
+                @Model.Property.District
+            </p>
+
+            <p>
+                <strong>Тип недвижимости:</strong>
+                @Model.Property.Type.GetDisplayName()
+            </p>
+
+            <p>
+                <strong>Площадь:</strong>
+                @Model.Property.Area.ToString("N2") м²
+            </p>
+
+            <p>
+                <strong>Тип сделки:</strong>
+                @Model.DealType.GetDisplayName()
+            </p>
+
+            <hr />
+
+            <h5 class="mb-3">3. Стоимость и комиссия</h5>
+
+            <p>
+                <strong>Стоимость недвижимости:</strong>
+                @Model.PropertyPrice.ToString("N2") ₽
+            </p>
+
+            <p>
+                <strong>Комиссия риелтора:</strong>
+                @Model.CommissionPercent.ToString("N2") %
+            </p>
+
+            <p>
+                <strong>Сумма комиссии:</strong>
+                @Model.CommissionAmount.ToString("N2") ₽
+            </p>
+
+            <hr />
+
+            <h5 class="mb-3">4. Статус договора</h5>
+
+            <p>
+                <strong>Текущий статус:</strong>
+                @Model.Status.GetDisplayName()
+            </p>
+
+            @if (Model.SignedAt.HasValue)
+            {
+                <p>
+                    <strong>Дата подписания:</strong>
+                    @Model.SignedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                </p>
+            }
+
+            @if (Model.CompletedAt.HasValue)
+            {
+                <p>
+                    <strong>Дата завершения:</strong>
+                    @Model.CompletedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                </p>
+            }
+
+            @if (Model.TerminatedAt.HasValue)
+            {
+                <p>
+                    <strong>Дата расторжения:</strong>
+                    @Model.TerminatedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                </p>
+            }
+
+            <hr />
+
+            <h5 class="mb-3">5. Дополнительные условия</h5>
+
+            <p>
+                @(string.IsNullOrWhiteSpace(Model.Notes)
+                    ? "Дополнительные условия не указаны."
+                    : Model.Notes)
+            </p>
+
+            <hr />
+
+            <p class="text-muted small">
+                Документ сформирован информационной системой «ДомПрофи».
+                Представленная форма является печатной формой договора
+                для учебного проекта.
+            </p>
+        </div>
+    </div>
+
+    @if (User.IsInRole(UserRoles.Realtor))
+    {
+        <div class="card shadow-sm mt-4 no-print">
+            <div class="card-body p-4">
+                <h5 class="mb-3">Управление статусом договора</h5>
+
+                @if (Model.Status == ContractStatus.Terminated)
+                {
+                    <div class="alert alert-secondary mb-0">
+                        Договор расторгнут. Изменение статуса недоступно.
+                    </div>
+                }
+                else
+                {
+                    <form asp-action="UpdateStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+
+                        <div class="row align-items-end">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    Новый статус
+                                </label>
+
+                                <select name="status" class="form-select">
+                                    @if (Model.Status == ContractStatus.Draft)
+                                    {
+                                        <option value="@((int)ContractStatus.UnderReview)">
+                                            На проверке
+                                        </option>
+                                        <option value="@((int)ContractStatus.Terminated)">
+                                            Расторгнут
+                                        </option>
+                                    }
+                                    else if (Model.Status == ContractStatus.UnderReview)
+                                    {
+                                        <option value="@((int)ContractStatus.Signed)">
+                                            Подписан
+                                        </option>
+                                        <option value="@((int)ContractStatus.Terminated)">
+                                            Расторгнут
+                                        </option>
+                                    }
+                                    else if (Model.Status == ContractStatus.Signed)
+                                    {
+                                        <option value="@((int)ContractStatus.InProgress)">
+                                            Исполняется
+                                        </option>
+                                        <option value="@((int)ContractStatus.Terminated)">
+                                            Расторгнут
+                                        </option>
+                                    }
+                                    else if (Model.Status == ContractStatus.InProgress)
+                                    {
+                                        <option value="@((int)ContractStatus.Completed)">
+                                            Завершён
+                                        </option>
+                                        <option value="@((int)ContractStatus.Terminated)">
+                                            Расторгнут
+                                        </option>
+                                    }
+                                    else if (Model.Status == ContractStatus.Completed)
+                                    {
+                                        <option value="@((int)ContractStatus.Terminated)">
+                                            Расторгнут
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <button type="submit" class="btn btn-primary">
+                                    Изменить статус
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="mt-4 no-print">
+        @if (User.IsInRole(UserRoles.Realtor))
+        {
+            <a asp-action="RealtorIndex"
+               class="btn btn-outline-secondary">
+                К списку договоров
+            </a>
+        }
+        else if (User.IsInRole(UserRoles.Client))
+        {
+            <a asp-action="MyContracts"
+               class="btn btn-outline-secondary">
+                К моим договорам
+            </a>
+        }
+    </div>
+</div>

@@ -1,0 +1,77 @@
+@model RealEstateAgency.ViewModels.ContractListViewModel
+
+@using RealEstateAgency.Models.Enums
+
+@{
+    ViewData["Title"] = "Мои договоры";
+}
+
+<div class="container py-5">
+    <h2 class="mb-2">Мои договоры</h2>
+
+    <p class="text-muted mb-4">
+        Здесь отображаются договоры, оформленные по вашим заявкам.
+    </p>
+
+    @if (Model.Contracts.Count == 0)
+    {
+        <div class="alert alert-info">
+            У вас пока нет договоров.
+            Когда риелтор оформит договор, он появится здесь.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Номер</th>
+                        <th>Объект недвижимости</th>
+                        <th>Тип сделки</th>
+                        <th>Стоимость</th>
+                        <th>Риелтор</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var contract in Model.Contracts)
+                    {
+                        <tr>
+                            <td>@contract.ContractNumber</td>
+                            <td>@contract.PropertyAddress</td>
+                            <td>@contract.DealType.GetDisplayName()</td>
+
+                            <td>
+                                @contract.PropertyPrice.ToString("N0") ₽
+                            </td>
+
+                            <td>@contract.RealtorName</td>
+
+                            <td>
+                                <span class="badge bg-primary">
+                                    @contract.Status.GetDisplayName()
+                                </span>
+                            </td>
+
+                            <td>
+                                @contract.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                            </td>
+
+                            <td>
+                                <a asp-action="Details"
+                                   asp-route-id="@contract.Id"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Открыть
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

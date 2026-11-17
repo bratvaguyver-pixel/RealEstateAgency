@@ -1,0 +1,96 @@
+@model RealEstateAgency.ViewModels.ContractListViewModel
+
+@using RealEstateAgency.Models.Enums
+
+@{
+    ViewData["Title"] = "Мои договоры";
+}
+
+<div class="container py-5">
+    <h2 class="mb-2">Договоры</h2>
+
+    <p class="text-muted mb-4">
+        Здесь отображаются договоры, созданные вами.
+    </p>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (Model.Contracts.Count == 0)
+    {
+        <div class="alert alert-info">
+            Вы пока не создавали договоры.
+            Создать договор можно на основе созданного подбора недвижимости.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Номер</th>
+                        <th>Клиент</th>
+                        <th>Объект</th>
+                        <th>Стоимость</th>
+                        <th>Комиссия</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var contract in Model.Contracts)
+                    {
+                        <tr>
+                            <td>@contract.ContractNumber</td>
+                            <td>@contract.ClientName</td>
+                            <td>@contract.PropertyAddress</td>
+
+                            <td>
+                                @contract.PropertyPrice.ToString("N0") ₽
+                            </td>
+
+                            <td>
+                                @contract.CommissionAmount.ToString("N2") ₽
+                                <div class="small text-muted">
+                                    @contract.CommissionPercent.ToString("N2") %
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-primary">
+                                    @contract.Status.GetDisplayName()
+                                </span>
+                            </td>
+
+                            <td>
+                                @contract.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                            </td>
+
+                            <td>
+                                <a asp-action="Details"
+                                   asp-route-id="@contract.Id"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Открыть
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

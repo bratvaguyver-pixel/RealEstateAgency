@@ -1,0 +1,114 @@
+@model RealEstateAgency.ViewModels.ContractCreateViewModel
+
+@using RealEstateAgency.Models.Enums
+
+@{
+    ViewData["Title"] = "Создание договора";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-2">Создание договора</h2>
+
+            <p class="text-muted mb-4">
+                Проверьте информацию перед созданием договора.
+            </p>
+
+            <div asp-validation-summary="All"
+                 class="text-danger mb-3"></div>
+
+            <form asp-action="Create" method="post">
+                <input type="hidden" asp-for="SelectionId" />
+
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3">Информация о договоре</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="ContractNumber" class="form-label"></label>
+                            <input asp-for="ContractNumber"
+                                   class="form-control"
+                                   readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ClientName" class="form-label"></label>
+                            <input asp-for="ClientName"
+                                   class="form-control"
+                                   readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PropertyAddress" class="form-label"></label>
+                            <input asp-for="PropertyAddress"
+                                   class="form-control"
+                                   readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DealType" class="form-label"></label>
+                            <input value="@Model.DealType.GetDisplayName()"
+                                   class="form-control"
+                                   readonly />
+                        </div>
+
+                        <hr />
+
+                        <h5 class="mb-3">Расчёт комиссии</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="PropertyPrice" class="form-label"></label>
+                            <input value="@Model.PropertyPrice.ToString("N2") ₽"
+                                   class="form-control"
+                                   readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CommissionPercent" class="form-label"></label>
+                            <input value="@Model.CommissionPercent.ToString("N2") %"
+                                   class="form-control"
+                                   readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CommissionAmount" class="form-label"></label>
+                            <input value="@Model.CommissionAmount.ToString("N2") ₽"
+                                   class="form-control"
+                                   readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label"></label>
+                            <textarea asp-for="Notes"
+                                      class="form-control"
+                                      rows="4"
+                                      placeholder="Дополнительные условия или примечания"></textarea>
+                            <span asp-validation-for="Notes"
+                                  class="text-danger"></span>
+                        </div>
+
+                        <div class="alert alert-info">
+                            После создания договор получит статус «Черновик».
+                            Изменить его статус можно будет на странице договора.
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Создать договор
+                        </button>
+
+                        <a asp-controller="Selections"
+                           asp-action="RealtorSelections"
+                           class="btn btn-outline-secondary ms-2">
+                            Назад
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

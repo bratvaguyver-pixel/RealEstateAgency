@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +7,7 @@ using RealEstateAgency.Data;
 using RealEstateAgency.Models;
 using RealEstateAgency.Models.Enums;
 using RealEstateAgency.ViewModels;
+using RequestEntity = RealEstateAgency.Models.Request;
 
 namespace RealEstateAgency.Controllers;
 
@@ -25,28 +25,52 @@ public class SelectionsController : Controller
         _userManager = userManager;
     }
 
-    // Открытие формы создания подбора.
-    // requestId передаётся из карточки заявки риелтора.
+    // Создание подбора риелтором.
+    // requestId передаётся при переходе из заявки.
     [Authorize(Roles = UserRoles.Realtor)]
     [HttpGet]
     public async Task<IActionResult> Create(int? requestId)
     {
-        var model = new SelectionCreateViewModel
+        var userId = _userManager.GetUserId(User);
+
+        var realtor = await _context.RealtorProfiles
+            .FirstOrDefaultAsync(r => r.UserId == userId);
+
+        if (realtor == null)
         {
-            RequestId = requestId ?? 0
-        };
-
-        await LoadCreateListsAsync(model, model.RequestId);
-
-        if (requestId.HasValue &&
-            !model.Requests.Any(r => r.Value == requestId.Value.ToString()))
-        {
-            TempData["Error"] =
-                "Заявка не найдена, уже закрыта или не назначена вам.";
-
-            model.RequestId = 0;
-            await LoadCreateListsAsync(model, 0);
+            return Forbid();
         }
+
+        var model = new SelectionCreateViewModel();
+
+        RequestEntity? selectedRequest = null;
+
+        if (requestId.HasValue)
+        {
+            selectedRequest = await _context.Requests
+                .FirstOrDefaultAsync(r =>
+                    r.Id == requestId.Value &&
+                    r.RealtorProfileId == realtor.Id &&
+                    (r.Status == RequestStatus.New ||
+                     r.Status == RequestStatus.InProgress));
+
+            if (selectedRequest == null)
+            {
+                TempData["Error"] =
+                    "Заявка не найдена или больше недоступна.";
+
+                return RedirectToAction(
+                    "Assigned",
+                    "Requests");
+            }
+
+            model.RequestId = selectedRequest.Id;
+        }
+
+        await LoadCreateListsAsync(
+            model,
+            realtor.Id,
+            selectedRequest?.PropertyType);
 
         if (model.Requests.Count == 0)
         {
@@ -55,8 +79,9 @@ public class SelectionsController : Controller
         }
         else if (model.Properties.Count == 0)
         {
-            TempData["Error"] =
-                "Для выбранной заявки нет доступных объектов подходящего типа.";
+            TempData["Error"] = selectedRequest?.PropertyType.HasValue == true
+                ? "Нет доступных объектов недвижимости подходящего типа."
+                : "У вас пока нет доступных объектов недвижимости.";
         }
 
         return View(model);
@@ -78,8 +103,7 @@ public class SelectionsController : Controller
             return Forbid();
         }
 
-        // Получаем только заявку текущего риелтора.
-        // Закрытые и отменённые заявки использовать нельзя.
+        // Проверяем, что заявка принадлежит текущему риелтору.
         var request = await _context.Requests
             .FirstOrDefaultAsync(r =>
                 r.Id == model.RequestId &&
@@ -91,10 +115,11 @@ public class SelectionsController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.RequestId),
-                "Заявка не найдена, недоступна или уже закрыта.");
+                "Заявка не найдена или недоступна.");
         }
 
-        // Получаем только собственный доступный объект риелтора.
+        // Проверяем, что объект принадлежит текущему риелтору
+        // и доступен для предложения клиенту.
         var property = await _context.Properties
             .FirstOrDefaultAsync(p =>
                 p.Id == model.PropertyId &&
@@ -105,10 +130,11 @@ public class SelectionsController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.PropertyId),
-                "Объект не найден, недоступен или принадлежит другому риелтору.");
+                "Объект не найден или недоступен.");
         }
 
         // Проверяем соответствие типа недвижимости заявке.
+        // Если клиент указал конкретный тип, другой тип предложить нельзя.
         if (request != null &&
             property != null &&
             request.PropertyType.HasValue &&
@@ -117,12 +143,10 @@ public class SelectionsController : Controller
             ModelState.AddModelError(
                 nameof(model.PropertyId),
                 $"Тип объекта не соответствует заявке. " +
-                $"Клиент ищет: {request.PropertyType.Value.GetDisplayName()}, " +
-                $"а выбранный объект: {property.Type.GetDisplayName()}.");
+                $"Клиент ищет: {request.PropertyType.Value.GetDisplayName()}.");
         }
 
-        // Не допускаем повторное добавление одного объекта
-        // в одну и ту же заявку.
+        // Проверяем, не был ли этот объект уже добавлен в подбор по заявке.
         if (request != null && property != null)
         {
             var alreadyExists = await _context.Selections
@@ -140,7 +164,11 @@ public class SelectionsController : Controller
 
         if (!ModelState.IsValid)
         {
-            await LoadCreateListsAsync(model, model.RequestId);
+            await LoadCreateListsAsync(
+                model,
+                realtor.Id,
+                request?.PropertyType);
+
             return View(model);
         }
 
@@ -157,7 +185,7 @@ public class SelectionsController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] =
-            "Объект успешно добавлен в подбор клиента.";
+            "Объект успешно добавлен в подбор.";
 
         return RedirectToAction(nameof(RealtorSelections));
     }
@@ -214,7 +242,7 @@ public class SelectionsController : Controller
         return View(model);
     }
 
-    // Подборы, предложенные текущему клиенту.
+    // Подборы, полученные текущим клиентом.
     [Authorize(Roles = UserRoles.Client)]
     [HttpGet]
     public async Task<IActionResult> MySelections()
@@ -282,25 +310,15 @@ public class SelectionsController : Controller
         return View(model);
     }
 
-    // Заполняет списки заявок и объектов для формы.
-    // Если заявка выбрана, объекты фильтруются по её типу.
+    // Загрузка списков для формы создания подбора.
     private async Task LoadCreateListsAsync(
         SelectionCreateViewModel model,
-        int selectedRequestId)
+        int realtorProfileId,
+        PropertyType? propertyType)
     {
-        var userId = _userManager.GetUserId(User);
-
-        var realtor = await _context.RealtorProfiles
-            .FirstOrDefaultAsync(r => r.UserId == userId);
-
-        if (realtor == null)
-        {
-            return;
-        }
-
         var requests = await _context.Requests
             .Where(r =>
-                r.RealtorProfileId == realtor.Id &&
+                r.RealtorProfileId == realtorProfileId &&
                 (r.Status == RequestStatus.New ||
                  r.Status == RequestStatus.InProgress))
             .Include(r => r.Client)
@@ -311,28 +329,21 @@ public class SelectionsController : Controller
         model.Requests = requests.Select(r => new SelectListItem
         {
             Value = r.Id.ToString(),
-            Text = $"Заявка №{r.Id} — " +
-                   $"{r.Client.User.FirstName} {r.Client.User.LastName}" +
-                   (r.PropertyType.HasValue
-                       ? $" ({r.PropertyType.Value.GetDisplayName()})"
-                       : " (любой тип)"),
-            Selected = r.Id == selectedRequestId
+            Text =
+                $"Заявка №{r.Id} — {r.Client.User.FirstName} {r.Client.User.LastName}"
         }).ToList();
-
-        var selectedRequest = requests
-            .FirstOrDefault(r => r.Id == selectedRequestId);
 
         var propertiesQuery = _context.Properties
             .Where(p =>
-                p.RealtorProfileId == realtor.Id &&
+                p.RealtorProfileId == realtorProfileId &&
                 p.Status == PropertyStatus.Available);
 
         // Если в заявке указан тип недвижимости,
         // показываем только объекты этого типа.
-        if (selectedRequest?.PropertyType is PropertyType propertyType)
+        if (propertyType.HasValue)
         {
             propertiesQuery = propertiesQuery
-                .Where(p => p.Type == propertyType);
+                .Where(p => p.Type == propertyType.Value);
         }
 
         var properties = await propertiesQuery
@@ -342,7 +353,7 @@ public class SelectionsController : Controller
         model.Properties = properties.Select(p => new SelectListItem
         {
             Value = p.Id.ToString(),
-            Text = $"{p.Address} — {p.Type.GetDisplayName()} — {p.Price:N0} ₽"
+            Text = $"{p.Address} — {p.Price:N0} ₽"
         }).ToList();
     }
 }

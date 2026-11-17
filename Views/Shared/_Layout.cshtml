@@ -1,5 +1,4 @@
-﻿
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="utf-8" />
@@ -85,6 +84,14 @@
                                     Мои подборы
                                 </a>
                             </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   asp-controller="Contracts"
+                                   asp-action="MyContracts">
+                                    Мои договоры
+                                </a>
+                            </li>
                         }
 
                         @if (User.IsInRole("Realtor"))
@@ -126,6 +133,14 @@
                                    asp-controller="Selections"
                                    asp-action="RealtorSelections">
                                     Созданные подборы
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   asp-controller="Contracts"
+                                   asp-action="RealtorIndex">
+                                    Договоры
                                 </a>
                             </li>
                         }
