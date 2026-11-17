@@ -1,0 +1,90 @@
+
+@model RealEstateAgency.ViewModels.SelectionListViewModel
+
+@{
+    ViewData["Title"] = "Созданные подборы";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2>Созданные подборы</h2>
+            <p class="text-muted mb-0">
+                Объекты, предложенные клиентам по их заявкам.
+            </p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">
+            Создать подбор
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (Model.Selections.Count == 0)
+    {
+        <div class="alert alert-info">
+            Вы ещё не создавали подборы недвижимости.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Заявка</th>
+                        <th>Клиент</th>
+                        <th>Объект</th>
+                        <th>Цена</th>
+                        <th>Дата создания</th>
+                        <th>Просмотр</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Selections)
+                    {
+                        <tr>
+                            <td>№@item.RequestId</td>
+                            <td>@item.ClientName</td>
+                            <td>
+                                @item.PropertyAddress
+                                <div class="small text-muted">
+                                    @item.PropertyType, @item.Area м²
+                                </div>
+                            </td>
+                            <td>@item.Price.ToString("N0") ₽</td>
+                            <td>
+                                @item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                            <td>
+                                @if (item.IsViewed)
+                                {
+                                    <span class="badge bg-success">Просмотрен</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Ожидает просмотра</span>
+                                }
+                            </td>
+                            <td>
+                                <a asp-controller="Properties"
+                                   asp-action="Details"
+                                   asp-route-id="@item.PropertyId"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Открыть
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

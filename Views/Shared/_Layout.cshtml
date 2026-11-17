@@ -77,6 +77,14 @@
                                     Мои заявки
                                 </a>
                             </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   asp-controller="Selections"
+                                   asp-action="MySelections">
+                                    Мои подборы
+                                </a>
+                            </li>
                         }
 
                         @if (User.IsInRole("Realtor"))
@@ -102,6 +110,22 @@
                                    asp-controller="Requests"
                                    asp-action="Assigned">
                                     Заявки клиентов
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   asp-controller="Selections"
+                                   asp-action="Create">
+                                    Создать подбор
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   asp-controller="Selections"
+                                   asp-action="RealtorSelections">
+                                    Созданные подборы
                                 </a>
                             </li>
                         }

@@ -21,6 +21,13 @@
         </div>
     }
 
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning">
+            @TempData["Error"]
+        </div>
+    }
+
     @if (Model.Requests.Count == 0)
     {
         <div class="alert alert-info">
@@ -112,9 +119,9 @@
 
                             <div class="d-flex flex-wrap gap-2">
                                 <a asp-controller="Selections"
-                                   asp-action="ForRequest"
+                                   asp-action="Create"
                                    asp-route-requestId="@request.Id"
-                                   class="btn btn-outline-primary">
+                                   class="btn btn-primary">
                                     Подобрать недвижимость
                                 </a>
 

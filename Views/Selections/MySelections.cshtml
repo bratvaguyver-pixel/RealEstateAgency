@@ -1,0 +1,97 @@
+
+@using RealEstateAgency.Models.Enums
+@model RealEstateAgency.ViewModels.SelectionListViewModel
+
+@{
+    ViewData["Title"] = "Мои подборы";
+}
+
+<div class="container py-4">
+    <h2 class="mb-2">Мои подборы недвижимости</h2>
+
+    <p class="text-muted mb-4">
+        Здесь находятся объекты, которые риелтор подобрал по вашим заявкам.
+    </p>
+
+    @if (Model.Selections.Count == 0)
+    {
+        <div class="alert alert-info">
+            Пока нет предложенных объектов недвижимости.
+            Когда риелтор создаст подбор, он появится здесь.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var item in Model.Selections)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        @if (!string.IsNullOrEmpty(item.MainPhoto))
+                        {
+                            <img src="@item.MainPhoto"
+                                 class="card-img-top"
+                                 alt="Фото недвижимости"
+                                 style="height: 220px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="bg-light d-flex align-items-center justify-content-center"
+                                 style="height: 220px;">
+                                <span class="text-muted">Фотография отсутствует</span>
+                            </div>
+                        }
+
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                @item.PropertyAddress
+                            </h5>
+
+                            <p class="text-muted mb-2">
+                                @item.District
+                            </p>
+
+                            <p class="mb-1">
+                                <strong>Тип:</strong> @item.PropertyType
+                            </p>
+
+                            <p class="mb-1">
+                                <strong>Площадь:</strong> @item.Area м²
+                            </p>
+
+                            @if (item.RoomCount.HasValue)
+                            {
+                                <p class="mb-1">
+                                    <strong>Комнат:</strong> @item.RoomCount
+                                </p>
+                            }
+
+                            <p class="mb-2">
+                                <strong>Тип сделки:</strong>
+                                @item.DealType.GetDisplayName()
+                            </p>
+
+                            <h5 class="text-primary mt-3">
+                                @item.Price.ToString("N0") ₽
+                            </h5>
+
+                            <p class="small text-muted">
+                                Предложено:
+                                @item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            </p>
+                        </div>
+
+                        <div class="card-footer bg-white">
+                            <a asp-controller="Properties"
+                               asp-action="Details"
+                               asp-route-id="@item.PropertyId"
+                               class="btn btn-primary w-100">
+                                Подробнее об объекте
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

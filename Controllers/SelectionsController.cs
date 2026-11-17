@@ -1,331 +1,348 @@
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using RealEstateAgency.Data;
 using RealEstateAgency.Models;
 using RealEstateAgency.Models.Enums;
 using RealEstateAgency.ViewModels;
-using SelectionEntity = RealEstateAgency.Models.Selection;
 
 namespace RealEstateAgency.Controllers;
 
 [Authorize]
 public class SelectionsController : Controller
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public SelectionsController(ApplicationDbContext dbContext)
+    public SelectionsController(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager)
     {
-        _dbContext = dbContext;
+        _context = context;
+        _userManager = userManager;
     }
 
-    // Подбор объектов для заявки риелтором
+    // Открытие формы создания подбора.
+    // requestId передаётся из карточки заявки риелтора.
     [Authorize(Roles = UserRoles.Realtor)]
     [HttpGet]
-    public async Task<IActionResult> ForRequest(int requestId)
+    public async Task<IActionResult> Create(int? requestId)
     {
-        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
-        var realtor = await _dbContext.RealtorProfiles
-            .FirstOrDefaultAsync(profile => profile.UserId == userId);
-
-        if (realtor == null)
+        var model = new SelectionCreateViewModel
         {
-            return Forbid();
-        }
-
-        var request = await _dbContext.Requests
-            .AsNoTracking()
-            .Include(item => item.Client)
-                .ThenInclude(client => client.User)
-            .FirstOrDefaultAsync(item =>
-                item.Id == requestId &&
-                item.RealtorProfileId == realtor.Id);
-
-        if (request == null)
-        {
-            return NotFound();
-        }
-
-        var selectedPropertyIds = await _dbContext.Selections
-            .Where(selection => selection.RequestId == request.Id)
-            .Select(selection => selection.PropertyId)
-            .ToListAsync();
-
-        var propertiesQuery = _dbContext.Properties
-            .AsNoTracking()
-            .Where(property => property.Status == PropertyStatus.Available);
-
-        if (request.PropertyType.HasValue)
-        {
-            propertiesQuery = propertiesQuery.Where(property =>
-                property.Type == request.PropertyType.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.PreferredDistrict))
-        {
-            string district = request.PreferredDistrict.Trim().ToLower();
-
-            propertiesQuery = propertiesQuery.Where(property =>
-                property.District.ToLower().Contains(district));
-        }
-
-        if (request.MinPrice.HasValue)
-        {
-            propertiesQuery = propertiesQuery.Where(property =>
-                property.Price >= request.MinPrice.Value);
-        }
-
-        if (request.MaxPrice.HasValue)
-        {
-            propertiesQuery = propertiesQuery.Where(property =>
-                property.Price <= request.MaxPrice.Value);
-        }
-
-        if (request.MinArea.HasValue)
-        {
-            propertiesQuery = propertiesQuery.Where(property =>
-                property.Area >= request.MinArea.Value);
-        }
-
-        if (request.MaxArea.HasValue)
-        {
-            propertiesQuery = propertiesQuery.Where(property =>
-                property.Area <= request.MaxArea.Value);
-        }
-
-        if (request.RoomCount.HasValue)
-        {
-            propertiesQuery = propertiesQuery.Where(property =>
-                property.RoomCount == request.RoomCount.Value);
-        }
-
-        var properties = await propertiesQuery
-            .OrderBy(property => property.Price)
-            .Select(property => new SelectionPropertyItemViewModel
-            {
-                Id = property.Id,
-                Address = property.Address,
-                District = property.District,
-                Type = property.Type,
-                Area = property.Area,
-                RoomCount = property.RoomCount,
-                Price = property.Price,
-                MainPhotoPath = property.Photos
-                    .Where(photo => photo.IsMain)
-                    .Select(photo => photo.FilePath)
-                    .FirstOrDefault()
-            })
-            .ToListAsync();
-
-        properties = properties
-            .Where(property => !selectedPropertyIds.Contains(property.Id))
-            .ToList();
-
-        var model = new PropertySelectionViewModel
-        {
-            RequestId = request.Id,
-            ClientName =
-                $"{request.Client.User.FirstName} {request.Client.User.LastName}",
-            DealType = request.DealType,
-            PropertyType = request.PropertyType,
-            PreferredDistrict = request.PreferredDistrict,
-            MinPrice = request.MinPrice,
-            MaxPrice = request.MaxPrice,
-            MinArea = request.MinArea,
-            MaxArea = request.MaxArea,
-            RoomCount = request.RoomCount,
-            Properties = properties
+            RequestId = requestId ?? 0
         };
+
+        await LoadCreateListsAsync(model, model.RequestId);
+
+        if (requestId.HasValue &&
+            !model.Requests.Any(r => r.Value == requestId.Value.ToString()))
+        {
+            TempData["Error"] =
+                "Заявка не найдена, уже закрыта или не назначена вам.";
+
+            model.RequestId = 0;
+            await LoadCreateListsAsync(model, 0);
+        }
+
+        if (model.Requests.Count == 0)
+        {
+            TempData["Error"] =
+                "У вас пока нет заявок, для которых можно создать подбор.";
+        }
+        else if (model.Properties.Count == 0)
+        {
+            TempData["Error"] =
+                "Для выбранной заявки нет доступных объектов подходящего типа.";
+        }
 
         return View(model);
     }
 
-    // Добавление объекта в подбор
+    // Сохранение подбора.
     [Authorize(Roles = UserRoles.Realtor)]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Add(int requestId, int propertyId)
+    public async Task<IActionResult> Create(SelectionCreateViewModel model)
     {
-        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = _userManager.GetUserId(User);
 
-        var realtor = await _dbContext.RealtorProfiles
-            .FirstOrDefaultAsync(profile => profile.UserId == userId);
+        var realtor = await _context.RealtorProfiles
+            .FirstOrDefaultAsync(r => r.UserId == userId);
 
         if (realtor == null)
         {
             return Forbid();
         }
 
-        var request = await _dbContext.Requests
-            .FirstOrDefaultAsync(item =>
-                item.Id == requestId &&
-                item.RealtorProfileId == realtor.Id);
+        // Получаем только заявку текущего риелтора.
+        // Закрытые и отменённые заявки использовать нельзя.
+        var request = await _context.Requests
+            .FirstOrDefaultAsync(r =>
+                r.Id == model.RequestId &&
+                r.RealtorProfileId == realtor.Id &&
+                (r.Status == RequestStatus.New ||
+                 r.Status == RequestStatus.InProgress));
 
         if (request == null)
         {
-            return NotFound();
+            ModelState.AddModelError(
+                nameof(model.RequestId),
+                "Заявка не найдена, недоступна или уже закрыта.");
         }
 
-        var property = await _dbContext.Properties
-            .FirstOrDefaultAsync(item =>
-                item.Id == propertyId &&
-                item.Status == PropertyStatus.Available);
+        // Получаем только собственный доступный объект риелтора.
+        var property = await _context.Properties
+            .FirstOrDefaultAsync(p =>
+                p.Id == model.PropertyId &&
+                p.RealtorProfileId == realtor.Id &&
+                p.Status == PropertyStatus.Available);
 
         if (property == null)
         {
-            TempData["ErrorMessage"] =
-                "Объект не найден или больше недоступен.";
-
-            return RedirectToAction(
-                nameof(ForRequest),
-                new { requestId });
+            ModelState.AddModelError(
+                nameof(model.PropertyId),
+                "Объект не найден, недоступен или принадлежит другому риелтору.");
         }
 
-        bool alreadySelected = await _dbContext.Selections
-            .AnyAsync(selection =>
-                selection.RequestId == requestId &&
-                selection.PropertyId == propertyId);
-
-        if (alreadySelected)
+        // Проверяем соответствие типа недвижимости заявке.
+        if (request != null &&
+            property != null &&
+            request.PropertyType.HasValue &&
+            request.PropertyType.Value != property.Type)
         {
-            TempData["ErrorMessage"] =
-                "Этот объект уже добавлен в подбор.";
-
-            return RedirectToAction(
-                nameof(ForRequest),
-                new { requestId });
+            ModelState.AddModelError(
+                nameof(model.PropertyId),
+                $"Тип объекта не соответствует заявке. " +
+                $"Клиент ищет: {request.PropertyType.Value.GetDisplayName()}, " +
+                $"а выбранный объект: {property.Type.GetDisplayName()}.");
         }
 
-        var selection = new SelectionEntity
+        // Не допускаем повторное добавление одного объекта
+        // в одну и ту же заявку.
+        if (request != null && property != null)
         {
-            RequestId = requestId,
-            PropertyId = propertyId,
+            var alreadyExists = await _context.Selections
+                .AnyAsync(s =>
+                    s.RequestId == request.Id &&
+                    s.PropertyId == property.Id);
+
+            if (alreadyExists)
+            {
+                ModelState.AddModelError(
+                    nameof(model.PropertyId),
+                    "Этот объект уже добавлен в подбор по выбранной заявке.");
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadCreateListsAsync(model, model.RequestId);
+            return View(model);
+        }
+
+        var selection = new Selection
+        {
+            RequestId = request!.Id,
+            PropertyId = property!.Id,
             CreatedAt = DateTime.UtcNow,
             IsViewed = false
         };
 
-        _dbContext.Selections.Add(selection);
+        _context.Selections.Add(selection);
 
-        await _dbContext.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] =
-            "Объект успешно добавлен в подбор для клиента.";
+            "Объект успешно добавлен в подбор клиента.";
 
-        return RedirectToAction(
-            nameof(ForRequest),
-            new { requestId });
+        return RedirectToAction(nameof(RealtorSelections));
     }
 
-    // Просмотр подборок клиентом
-    [Authorize(Roles = UserRoles.Client)]
+    // Подборы, созданные текущим риелтором.
+    [Authorize(Roles = UserRoles.Realtor)]
     [HttpGet]
-    public async Task<IActionResult> MySelections()
+    public async Task<IActionResult> RealtorSelections()
     {
-        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = _userManager.GetUserId(User);
 
-        var client = await _dbContext.ClientProfiles
-            .FirstOrDefaultAsync(profile => profile.UserId == userId);
+        var realtor = await _context.RealtorProfiles
+            .FirstOrDefaultAsync(r => r.UserId == userId);
 
-        if (client == null)
+        if (realtor == null)
         {
             return Forbid();
         }
 
-        var requests = await _dbContext.Requests
-            .AsNoTracking()
-            .Where(request => request.ClientProfileId == client.Id)
-            .Include(request => request.Selections)
-                .ThenInclude(selection => selection.Property)
-                    .ThenInclude(property => property.Photos)
-            .OrderByDescending(request => request.CreatedAt)
+        var selections = await _context.Selections
+            .Where(s => s.Request.RealtorProfileId == realtor.Id)
+            .Include(s => s.Property)
+                .ThenInclude(p => p.Photos)
+            .Include(s => s.Request)
+                .ThenInclude(r => r.Client)
+                    .ThenInclude(c => c.User)
+            .OrderByDescending(s => s.CreatedAt)
             .ToListAsync();
 
-        var model = new MySelectionsViewModel
+        var model = new SelectionListViewModel
         {
-            Requests = requests.Select(request =>
-                new MySelectionRequestViewModel
-                {
-                    RequestId = request.Id,
-                    DealType = request.DealType,
-                    RequestStatus = request.Status,
-                    CreatedAt = request.CreatedAt,
-                    Properties = request.Selections
-                        .OrderByDescending(selection => selection.CreatedAt)
-                        .Select(selection => new MySelectionPropertyViewModel
-                        {
-                            SelectionId = selection.Id,
-                            PropertyId = selection.Property.Id,
-                            Address = selection.Property.Address,
-                            District = selection.Property.District,
-                            Type = selection.Property.Type,
-                            Area = selection.Property.Area,
-                            RoomCount = selection.Property.RoomCount,
-                            Price = selection.Property.Price,
-                            Status = selection.Property.Status,
-                            MainPhotoPath = selection.Property.Photos
-                                .Where(photo => photo.IsMain)
-                                .Select(photo => photo.FilePath)
-                                .FirstOrDefault(),
-                            AddedAt = selection.CreatedAt,
-                            IsViewed = selection.IsViewed,
-                            ClientComment = selection.ClientComment
-                        })
-                        .ToList()
-                })
-                .ToList()
+            Selections = selections.Select(s => new SelectionListItemViewModel
+            {
+                Id = s.Id,
+                RequestId = s.RequestId,
+                PropertyId = s.PropertyId,
+                PropertyAddress = s.Property.Address,
+                District = s.Property.District,
+                PropertyType = s.Property.Type.GetDisplayName(),
+                Area = s.Property.Area,
+                RoomCount = s.Property.RoomCount,
+                Price = s.Property.Price,
+                MainPhoto = s.Property.Photos
+                    .FirstOrDefault(p => p.IsMain)?.FilePath
+                    ?? s.Property.Photos.FirstOrDefault()?.FilePath,
+                CreatedAt = s.CreatedAt,
+                IsViewed = s.IsViewed,
+                ClientName =
+                    $"{s.Request.Client.User.FirstName} {s.Request.Client.User.LastName}",
+                DealType = s.Request.DealType
+            }).ToList()
         };
 
         return View(model);
     }
 
-    // Клиент отмечает объект просмотренным и оставляет комментарий
+    // Подборы, предложенные текущему клиенту.
     [Authorize(Roles = UserRoles.Client)]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateFeedback(
-        int selectionId,
-        string? comment)
+    [HttpGet]
+    public async Task<IActionResult> MySelections()
     {
-        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = _userManager.GetUserId(User);
 
-        var client = await _dbContext.ClientProfiles
-            .FirstOrDefaultAsync(profile => profile.UserId == userId);
+        var client = await _context.ClientProfiles
+            .FirstOrDefaultAsync(c => c.UserId == userId);
 
         if (client == null)
         {
             return Forbid();
         }
 
-        var selection = await _dbContext.Selections
-            .Include(item => item.Request)
-            .FirstOrDefaultAsync(item =>
-                item.Id == selectionId &&
-                item.Request.ClientProfileId == client.Id);
+        var selections = await _context.Selections
+            .Where(s => s.Request.ClientProfileId == client.Id)
+            .Include(s => s.Property)
+                .ThenInclude(p => p.Photos)
+            .Include(s => s.Request)
+                .ThenInclude(r => r.Realtor)
+                    .ThenInclude(r => r!.User)
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync();
 
-        if (selection == null)
+        // Отмечаем подборы как просмотренные.
+        var unreadSelections = selections
+            .Where(s => !s.IsViewed)
+            .ToList();
+
+        foreach (var selection in unreadSelections)
         {
-            return NotFound();
+            selection.IsViewed = true;
         }
 
-        if (comment?.Length > 1000)
+        if (unreadSelections.Count > 0)
         {
-            TempData["ErrorMessage"] =
-                "Комментарий не должен превышать 1000 символов.";
-
-            return RedirectToAction(nameof(MySelections));
+            await _context.SaveChangesAsync();
         }
 
-        selection.IsViewed = true;
-        selection.ClientComment = comment?.Trim();
+        var model = new SelectionListViewModel
+        {
+            Selections = selections.Select(s => new SelectionListItemViewModel
+            {
+                Id = s.Id,
+                RequestId = s.RequestId,
+                PropertyId = s.PropertyId,
+                PropertyAddress = s.Property.Address,
+                District = s.Property.District,
+                PropertyType = s.Property.Type.GetDisplayName(),
+                Area = s.Property.Area,
+                RoomCount = s.Property.RoomCount,
+                Price = s.Property.Price,
+                MainPhoto = s.Property.Photos
+                    .FirstOrDefault(p => p.IsMain)?.FilePath
+                    ?? s.Property.Photos.FirstOrDefault()?.FilePath,
+                CreatedAt = s.CreatedAt,
+                IsViewed = true,
+                RealtorName = s.Request.Realtor == null
+                    ? "Не назначен"
+                    : $"{s.Request.Realtor.User.FirstName} {s.Request.Realtor.User.LastName}",
+                DealType = s.Request.DealType
+            }).ToList()
+        };
 
-        await _dbContext.SaveChangesAsync();
+        return View(model);
+    }
 
-        TempData["SuccessMessage"] =
-            "Ваш отзыв успешно сохранён.";
+    // Заполняет списки заявок и объектов для формы.
+    // Если заявка выбрана, объекты фильтруются по её типу.
+    private async Task LoadCreateListsAsync(
+        SelectionCreateViewModel model,
+        int selectedRequestId)
+    {
+        var userId = _userManager.GetUserId(User);
 
-        return RedirectToAction(nameof(MySelections));
+        var realtor = await _context.RealtorProfiles
+            .FirstOrDefaultAsync(r => r.UserId == userId);
+
+        if (realtor == null)
+        {
+            return;
+        }
+
+        var requests = await _context.Requests
+            .Where(r =>
+                r.RealtorProfileId == realtor.Id &&
+                (r.Status == RequestStatus.New ||
+                 r.Status == RequestStatus.InProgress))
+            .Include(r => r.Client)
+                .ThenInclude(c => c.User)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        model.Requests = requests.Select(r => new SelectListItem
+        {
+            Value = r.Id.ToString(),
+            Text = $"Заявка №{r.Id} — " +
+                   $"{r.Client.User.FirstName} {r.Client.User.LastName}" +
+                   (r.PropertyType.HasValue
+                       ? $" ({r.PropertyType.Value.GetDisplayName()})"
+                       : " (любой тип)"),
+            Selected = r.Id == selectedRequestId
+        }).ToList();
+
+        var selectedRequest = requests
+            .FirstOrDefault(r => r.Id == selectedRequestId);
+
+        var propertiesQuery = _context.Properties
+            .Where(p =>
+                p.RealtorProfileId == realtor.Id &&
+                p.Status == PropertyStatus.Available);
+
+        // Если в заявке указан тип недвижимости,
+        // показываем только объекты этого типа.
+        if (selectedRequest?.PropertyType is PropertyType propertyType)
+        {
+            propertiesQuery = propertiesQuery
+                .Where(p => p.Type == propertyType);
+        }
+
+        var properties = await propertiesQuery
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        model.Properties = properties.Select(p => new SelectListItem
+        {
+            Value = p.Id.ToString(),
+            Text = $"{p.Address} — {p.Type.GetDisplayName()} — {p.Price:N0} ₽"
+        }).ToList();
     }
 }
