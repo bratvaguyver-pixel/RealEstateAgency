@@ -22,7 +22,7 @@ public class PropertyCreateViewModel
     public PropertyType Type { get; set; }
 
     [Required(ErrorMessage = "Укажите площадь.")]
-    [Range(typeof(decimal), "0.01", "999999999999",
+    [Range(0.01, 999999999999,
         ErrorMessage = "Площадь должна быть больше нуля.")]
     [Display(Name = "Площадь, м²")]
     public decimal Area { get; set; }
@@ -36,7 +36,7 @@ public class PropertyCreateViewModel
     public int? Floor { get; set; }
 
     [Required(ErrorMessage = "Укажите цену.")]
-    [Range(typeof(decimal), "0.01", "999999999999",
+    [Range(0.01, 999999999999,
         ErrorMessage = "Цена должна быть больше нуля.")]
     [Display(Name = "Цена")]
     public decimal Price { get; set; }

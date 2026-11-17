@@ -1,0 +1,156 @@
+
+@model RealEstateAgency.ViewModels.RequestListViewModel
+
+@using RealEstateAgency.Models.Enums
+
+@{
+    ViewData["Title"] = "Заявки клиентов";
+}
+
+<div class="container py-5">
+    <h1 class="mb-2">Заявки клиентов</h1>
+
+    <p class="text-muted mb-4">
+        Здесь отображаются заявки, назначенные вам.
+    </p>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (Model.Requests.Count == 0)
+    {
+        <div class="alert alert-info">
+            У вас пока нет назначенных заявок.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var request in Model.Requests)
+            {
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                <div>
+                                    <h5>Заявка №@request.Id</h5>
+                                    <p class="text-muted mb-0">
+                                        Дата создания:
+                                        @request.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                    </p>
+                                </div>
+
+                                <span class="badge bg-primary">
+                                    @request.Status.GetDisplayName()
+                                </span>
+                            </div>
+
+                            <hr />
+
+                            <h6>Информация о клиенте</h6>
+                            <p>@request.ClientName</p>
+
+                            <h6>Параметры заявки</h6>
+
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <strong>Тип сделки:</strong>
+                                    <p>@request.DealType.GetDisplayName()</p>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <strong>Тип недвижимости:</strong>
+                                    <p>
+                                        @(request.PropertyType.HasValue
+                                            ? request.PropertyType.Value.GetDisplayName()
+                                            : "Любой")
+                                    </p>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <strong>Район:</strong>
+                                    <p>@(request.PreferredDistrict ?? "Не указан")</p>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <strong>Бюджет:</strong>
+                                    <p>
+                                        @(request.MinPrice?.ToString("N0") ?? "Не указан")
+                                        —
+                                        @(request.MaxPrice?.ToString("N0") ?? "Не указан") ₽
+                                    </p>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <strong>Площадь:</strong>
+                                    <p>
+                                        @(request.MinArea?.ToString("N2") ?? "Не указана")
+                                        —
+                                        @(request.MaxArea?.ToString("N2") ?? "Не указана") м²
+                                    </p>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <strong>Комнат:</strong>
+                                    <p>@(request.RoomCount?.ToString() ?? "Не указано")</p>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(request.Description))
+                            {
+                                <div class="mb-3">
+                                    <strong>Пожелания клиента:</strong>
+                                    <p>@request.Description</p>
+                                </div>
+                            }
+
+                            <hr />
+
+                            <div class="d-flex flex-wrap gap-2">
+                                <a asp-controller="Selections"
+                                   asp-action="ForRequest"
+                                   asp-route-requestId="@request.Id"
+                                   class="btn btn-outline-primary">
+                                    Подобрать недвижимость
+                                </a>
+
+                                <form asp-action="UpdateStatus"
+                                      method="post"
+                                      class="d-flex flex-wrap gap-2 align-items-end">
+
+                                    <input type="hidden"
+                                           name="id"
+                                           value="@request.Id" />
+
+                                    <div style="min-width: 220px;">
+                                        <label class="form-label">
+                                            Изменить статус
+                                        </label>
+
+                                        <select name="status" class="form-select">
+                                            @foreach (RequestStatus status in Enum.GetValues<RequestStatus>())
+                                            {
+                                                <option value="@((int)status)"
+                                                        selected="@(status == request.Status)">
+                                                    @status.GetDisplayName()
+                                                </option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">
+                                        Сохранить статус
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
