@@ -44,6 +44,14 @@
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               asp-controller="Properties"
+                               asp-action="Index">
+                                Каталог недвижимости
+                            </a>
+                        </li>
+
                         @if (User.IsInRole("Client"))
                         {
                             <li class="nav-item">
