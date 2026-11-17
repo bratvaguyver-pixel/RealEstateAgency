@@ -1,8 +1,54 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using RealEstateAgency.Models
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    ApplicationUser? currentUser = null;
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+    }
+
+    string profileName = currentUser == null
+        ? "Личный кабинет"
+        : $"{currentUser.FirstName} {currentUser.LastName}".Trim();
+
+    if (string.IsNullOrWhiteSpace(profileName))
+    {
+        profileName = "Профиль пользователя";
+    }
+
+    string roleName = "Пользователь";
+    string dashboardAction = "Index";
+    string dashboardController = "Home";
+
+    if (User.IsInRole(UserRoles.Admin))
+    {
+        roleName = "Администратор";
+        dashboardAction = "Admin";
+        dashboardController = "Dashboard";
+    }
+    else if (User.IsInRole(UserRoles.Realtor))
+    {
+        roleName = "Риелтор";
+        dashboardAction = "Realtor";
+        dashboardController = "Dashboard";
+    }
+    else if (User.IsInRole(UserRoles.Client))
+    {
+        roleName = "Клиент";
+        dashboardAction = "Client";
+        dashboardController = "Dashboard";
+    }
+}
+
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>@ViewData["Title"] - ДомПрофи</title>
 
     <link rel="stylesheet"
@@ -13,14 +59,21 @@
           href="~/css/site.css"
           asp-append-version="true" />
 </head>
+
 <body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+    <header class="site-header">
+        <nav class="navbar navbar-expand-xl">
             <div class="container">
-                <a class="navbar-brand fw-bold"
+                <a class="navbar-brand site-brand"
                    asp-controller="Home"
                    asp-action="Index">
-                    ДомПрофи
+
+                    <span class="brand-symbol">Д</span>
+
+                    <span class="brand-content">
+                        <strong>ДомПрофи</strong>
+                        <small>АГЕНТСТВО НЕДВИЖИМОСТИ</small>
+                    </span>
                 </a>
 
                 <button class="navbar-toggler"
@@ -34,7 +87,7 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="mainNavbar">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <ul class="navbar-nav main-navigation me-auto">
                         <li class="nav-item">
                             <a class="nav-link"
                                asp-controller="Home"
@@ -51,59 +104,55 @@
                             </a>
                         </li>
 
-                        @if (User.IsInRole("Client"))
+                        @if (User.IsInRole(UserRoles.Client))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Dashboard"
-                                   asp-action="Client">
-                                    Личный кабинет
-                                </a>
-                            </li>
-
                             <li class="nav-item">
                                 <a class="nav-link"
                                    asp-controller="Requests"
                                    asp-action="Create">
-                                    Создать заявку
+                                    Оставить заявку
                                 </a>
                             </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Requests"
-                                   asp-action="MyRequests">
-                                    Мои заявки
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false">
+                                    Мои разделы
                                 </a>
-                            </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Selections"
-                                   asp-action="MySelections">
-                                    Мои подборы
-                                </a>
-                            </li>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Requests"
+                                           asp-action="MyRequests">
+                                            Мои заявки
+                                        </a>
+                                    </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Contracts"
-                                   asp-action="MyContracts">
-                                    Мои договоры
-                                </a>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Selections"
+                                           asp-action="MySelections">
+                                            Мои подборы
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Contracts"
+                                           asp-action="MyContracts">
+                                            Мои договоры
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                         }
 
-                        @if (User.IsInRole("Realtor"))
+                        @if (User.IsInRole(UserRoles.Realtor))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Dashboard"
-                                   asp-action="Realtor">
-                                    Кабинет риелтора
-                                </a>
-                            </li>
-
                             <li class="nav-item">
                                 <a class="nav-link"
                                    asp-controller="Properties"
@@ -112,64 +161,132 @@
                                 </a>
                             </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Requests"
-                                   asp-action="Assigned">
-                                    Заявки клиентов
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false">
+                                    Рабочий раздел
                                 </a>
-                            </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Selections"
-                                   asp-action="Create">
-                                    Создать подбор
-                                </a>
-                            </li>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Requests"
+                                           asp-action="Assigned">
+                                            Заявки клиентов
+                                        </a>
+                                    </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Selections"
-                                   asp-action="RealtorSelections">
-                                    Созданные подборы
-                                </a>
-                            </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Selections"
+                                           asp-action="Create">
+                                            Создать подбор
+                                        </a>
+                                    </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Contracts"
-                                   asp-action="RealtorIndex">
-                                    Договоры
-                                </a>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Selections"
+                                           asp-action="RealtorSelections">
+                                            Созданные подборы
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Contracts"
+                                           asp-action="RealtorIndex">
+                                            Договоры
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                         }
 
-                        @if (User.IsInRole("Admin"))
+                        @if (User.IsInRole(UserRoles.Admin))
                         {
                             <li class="nav-item">
                                 <a class="nav-link"
-                                   asp-controller="Dashboard"
-                                   asp-action="Admin">
-                                    Панель администратора
+                                   asp-controller="Admin"
+                                   asp-action="Properties">
+                                    Модерация
                                 </a>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false">
+                                    Управление
+                                </a>
+
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Admin"
+                                           asp-action="Users">
+                                            Пользователи
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Admin"
+                                           asp-action="Properties">
+                                            Объекты недвижимости
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Admin"
+                                           asp-action="Requests">
+                                            Заявки
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Admin"
+                                           asp-action="Contracts">
+                                            Договоры
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                         }
                     </ul>
 
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="header-account">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <span class="navbar-text">
-                                @User.Identity.Name
-                            </span>
+                            <a class="user-profile"
+                               asp-controller="@dashboardController"
+                               asp-action="@dashboardAction"
+                               title="Перейти в личный кабинет">
+
+                                <span class="user-avatar">
+                                    @(currentUser?.FirstName?.FirstOrDefault() ?? 'П')
+                                </span>
+
+                                <span class="user-profile-info">
+                                    <strong>@profileName</strong>
+                                    <small>@roleName</small>
+                                </span>
+                            </a>
 
                             <form asp-controller="Account"
                                   asp-action="Logout"
                                   method="post"
-                                  class="d-inline">
+                                  class="logout-form">
+
                                 <button type="submit"
-                                        class="btn btn-outline-danger">
+                                        class="btn btn-outline-danger logout-button">
                                     Выйти
                                 </button>
                             </form>
@@ -194,13 +311,64 @@
         </nav>
     </header>
 
-    <main role="main">
+    <main class="main-content">
         @RenderBody()
     </main>
 
-    <footer class="border-top footer text-muted mt-5 py-3">
+    <footer class="site-footer">
         <div class="container">
-            © @DateTime.Now.Year — ДомПрофи
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span class="brand-symbol">Д</span>
+                        <strong>ДомПрофи</strong>
+                    </div>
+
+                    <p>
+                        Помогаем найти недвижимость,
+                        в которой начинается новая история.
+                    </p>
+                </div>
+
+                <div class="footer-navigation">
+                    <a asp-controller="Home"
+                       asp-action="Index">
+                        Главная
+                    </a>
+
+                    <a asp-controller="Properties"
+                       asp-action="Index">
+                        Каталог
+                    </a>
+
+                    @if (User.IsInRole(UserRoles.Client))
+                    {
+                        <a asp-controller="Requests"
+                           asp-action="Create">
+                            Оставить заявку
+                        </a>
+                    }
+                    else if (User.IsInRole(UserRoles.Realtor))
+                    {
+                        <a asp-controller="Properties"
+                           asp-action="Create">
+                            Добавить объект
+                        </a>
+                    }
+                    else if (User.IsInRole(UserRoles.Admin))
+                    {
+                        <a asp-controller="Dashboard"
+                           asp-action="Admin">
+                            Панель администратора
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <span>© @DateTime.Now.Year ДомПрофи</span>
+                <span>Агентство недвижимости</span>
+            </div>
         </div>
     </footer>
 
