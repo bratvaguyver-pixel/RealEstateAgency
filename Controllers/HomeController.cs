@@ -17,7 +17,6 @@ public class HomeController : Controller
         _dbContext = dbContext;
     }
 
-    // Главная страница с реальными объектами из базы данных.
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -45,17 +44,10 @@ public class HomeController : Controller
             })
             .ToListAsync();
 
-        var model = new HomeViewModel
+        return View(new HomeViewModel
         {
             Properties = properties
-        };
-
-        return View(model);
-    }
-
-    public IActionResult Privacy()
-    {
-        return View();
+        });
     }
 
     [ResponseCache(
